@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 )
 
 type inputFile struct {
@@ -24,9 +25,13 @@ func main() {
 		exitGracefully(errors.New("A filepath argument is required"))
 	}
 
-	var separator string
+	var (
+		separator string
+		timeLimit int
+	)
 
 	flag.StringVar(&separator, "separator", "comma", "Column separator")
+	flag.IntVar(&timeLimit, "time", 30, "Time limit in seconds")
 
 	flag.Parse()
 
@@ -43,20 +48,41 @@ func main() {
 		exitGracefully(err)
 	}
 
+	fmt.Println("Press Enter to start the quiz.")
+	_, err = fmt.Scanln()
+	if err != nil {
+		return
+	}
+
 	score := 0
+	timer := time.NewTimer(time.Duration(timeLimit) * time.Second)
+
 	for _, qa := range questions {
 		fmt.Println("Question:", qa.Question)
-		var answer string
-		_, err := fmt.Scanln(&answer)
-		if err != nil {
-			exitGracefully(err)
-		}
 
-		if answer == qa.Answer {
-			score++
+		answerCh := make(chan string)
+		go func() {
+			var answer string
+			_, err := fmt.Scanln(&answer)
+			if err != nil {
+				exitGracefully(err)
+			}
+			answerCh <- answer
+		}()
+
+		select {
+		case <-timer.C:
+			fmt.Println("Time's up!")
+			fmt.Println("Final score:", score, "/", len(questions))
+			return
+		case answer := <-answerCh:
+			if answer == qa.Answer {
+				score++
+			}
 		}
 	}
 
+	fmt.Println("Quiz completed!")
 	fmt.Println("Final score:", score, "/", len(questions))
 }
 
