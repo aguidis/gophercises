@@ -2,14 +2,13 @@ package layout
 
 import "html/template"
 
-// tpl TODO When it was named "tpl" I have error message "this var is not exported" why ?
-var Tpl *template.Template
+var StoryTmpl *template.Template
 
 func init() {
-	Tpl = template.Must(template.New("").Parse(defaultHandlerTmpl))
+	StoryTmpl = template.Must(template.New("").Parse(storyTmpl))
 }
 
-var defaultHandlerTmpl = `
+var storyTmpl = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -25,7 +24,7 @@ var defaultHandlerTmpl = `
       {{if .Options}}
         <ul>
         {{range .Options}}
-          <li><a href="/{{.Chapter}}">{{.Text}}</a></li>
+          <li><a href="/story/{{.Chapter}}">{{.Text}}</a></li>
         {{end}}
         </ul>
       {{else}}
